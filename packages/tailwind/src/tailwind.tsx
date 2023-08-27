@@ -51,20 +51,29 @@ export const Tailwind: React.FC<TailwindProps> = ({ children, config }) => {
       replace: (domNode) => {
         if (domNode instanceof Element) {
           if (hasResponsiveStyles && hasHead && domNode.name === "head") {
-            let newDomNode: JSX.Element | null = null;
+            const existingStyles = domNode.childern.find(
+                (child) => child instanceof Element && child.name === "style"
+          );
 
-            if (domNode.children) {
-              const props = attributesToProps(domNode.attribs);
-
-              newDomNode = (
-                <head {...props}>
-                  {domToReact(domNode.children)}
-                  <style>{headStyle}</style>
-                </head>
-              );
+            let combinedStyles = headStyle;
+          if (existingStyles) {
+            const textNode = existingStyles.children[0];
+            if (textNode && textNode instanceof Text) {
+              combinedStyles = `${textNode.rawText}\n${headStyle}`;
             }
+          }
 
-            return newDomNode;
+             // Update the existing <style> element or add a new one
+          if (existingStyles) {
+            existingStyles.children = [{ type: "text", rawText: combinedStyles }];
+          } else {
+            domNode.children.push(
+              createElement("style", null, combinedStyles)
+            );
+          }
+        }
+      }
+        return DomNode;
           }
 
           if (domNode.attribs?.class) {
